@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,22 +26,20 @@ void main() {
   ));
 }
 
-class CountDown extends ValueNotifier<int> {
-  late StreamSubscription sub;
-  CountDown({required int from}) : super(from) {
-    sub = Stream.periodic(
-      const Duration(seconds: 1),
-      (v) => from - v,
-    ).takeWhile((value) => value >= 0).listen((value) {
-      this.value = value;
-    });
-  }
+const url =
+    'https://images.unsplash.com/photo-1471879832106-c7ab9e0cee23?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxleHBsb3JlLWZlZWR8Mnx8fGVufDB8fHx8&w=1000&q=80';
+const imageHeight = 300.0;
 
-  @override
-  void dispose() {
-    sub.cancel();
-    super.dispose();
-  }
+extension Normalize on num {
+  num normalize(
+    num selfRangeMin,
+    num selfRangeMax, [
+    num normalizedRangeMin = 0.0,
+    num normalizedRangeMax = 1.0,
+  ]) =>
+      (normalizedRangeMax - normalizedRangeMin) *
+          ((this - selfRangeMin) / (selfRangeMax - selfRangeMin)) +
+      normalizedRangeMin;
 }
 
 class HomePage extends HookWidget {
@@ -48,16 +47,66 @@ class HomePage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final countDown = useMemoized(() => CountDown(from: 20));
+    final opacity = useAnimationController(
+      duration: const Duration(seconds: 1),
+      initialValue: 1.0,
+      upperBound: 1.0,
+      lowerBound: 0.0,
+    );
 
-    /// to consume lisnables changenotifiers and valuenotifiers
-    final notifier = useListenable(countDown);
+    final size = useAnimationController(
+      duration: const Duration(seconds: 1),
+      initialValue: 1.0,
+      upperBound: 1.0,
+      lowerBound: 0.0,
+    );
+
+    final controller = useScrollController();
+    useEffect(
+      () {
+        controller.addListener(() {
+          final newOpacity = max(imageHeight - controller.offset, 0.0);
+          final normalized = newOpacity.normalize(0.0, imageHeight).toDouble();
+          opacity.value = normalized;
+          size.value = normalized;
+        });
+        return null;
+      },
+      [controller],
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
       ),
-      body: Text(notifier.value.toString()),
+      body: Column(
+        children: [
+          SizeTransition(
+            sizeFactor: size,
+            axis: Axis.vertical,
+            axisAlignment: -1.0,
+            child: FadeTransition(
+              opacity: opacity,
+              child: Image.network(
+                url,
+                height: imageHeight,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              controller: controller,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text('Person ${index + 1}'),
+                );
+              },
+              itemCount: 100,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
