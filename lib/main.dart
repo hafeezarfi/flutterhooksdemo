@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -23,37 +25,39 @@ void main() {
   ));
 }
 
-const url =
-    'https://images.unsplash.com/photo-1471879832106-c7ab9e0cee23?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxleHBsb3JlLWZlZWR8Mnx8fGVufDB8fHx8&w=1000&q=80';
+class CountDown extends ValueNotifier<int> {
+  late StreamSubscription sub;
+  CountDown({required int from}) : super(from) {
+    sub = Stream.periodic(
+      const Duration(seconds: 1),
+      (v) => from - v,
+    ).takeWhile((value) => value >= 0).listen((value) {
+      this.value = value;
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
+}
 
 class HomePage extends HookWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    /// caching complex object with useMemoized returns future
-    final future = useMemoized(
-      () => NetworkAssetBundle(Uri.parse(url))
-          .load(url)
-          .then(
-            (data) => data.buffer.asUint8List(),
-          )
-          .then(
-            (data) => Image.memory(data),
-          ),
-    );
+    final countDown = useMemoized(() => CountDown(from: 20));
 
-    /// to consume the future
-    final snapshot = useFuture(future);
+    /// to consume lisnables changenotifiers and valuenotifiers
+    final notifier = useListenable(countDown);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
       ),
-      body: Column(
-        children: [
-          snapshot.data,
-        ].compactMap().toList(),
-      ),
+      body: Text(notifier.value.toString()),
     );
   }
 }
