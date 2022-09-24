@@ -1,16 +1,11 @@
 # flutterhooksdemo
 
-A new Flutter project.
+<b>React Hooks</b> approach with Dart for Flutter sample.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is about several hook methods which if used properly can reduce redundency and can be used to avoid statefulness when using stream, any controllers etc.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Key Points
+- <b>HookWidget</b> which extends StatelessWidget
+- useEffect, useMemoized, useFuture, useLisnables, useAnimationController, useScrollController, useStreamController, useReducer, useAppLifecycleState
